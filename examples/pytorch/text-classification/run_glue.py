@@ -202,6 +202,17 @@ class ModelArguments:
         metadata={"help": "Will enable to load a pretrained model whose head dimensions are different."},
     )
 
+class CustomTrainer(Trainer):
+    def compute_loss(self, model, inputs, return_outputs=False):
+        labels = inputs.get("labels")
+        # forward pass
+        outputs = model(**inputs)
+        logits = outputs.get("logits")
+        # compute custom loss (suppose one has 3 labels with different weights)
+        loss_fct = nn.CrossEntropyLoss(weight=torch.tensor([9.62323556e-01, 4.66962035e-01, 1.22972420e-01, 3.52266615e+00, 5.58247846e-01, 7.76516916e-01, 1.74856979e-01, 6.18724696e-01, 3.38670360e+00, 1.27168712e+00, 1.39280018e+00, 7.51721594e-01, 4.19656751e+00, 1.78742690e+00, 2.36687231e-01, 3.66442873e-01, 8.37129685e-01, 2.67371337e+00, 7.54070724e+00, 6.84546473e+00, 3.00688637e+00, 3.52266615e+00, 1.16712276e+00, 5.57925160e+00, 3.44718045e+01, 2.35992794e+00, 3.13380041e+00, 1.10943739e+01, 1.00542763e+01, 1.44061273e+01, 4.42757122e+00, 4.64043522e+00, 8.77464115e+00, 4.82605263e+02, 4.82605263e+02, 1.37887218e+02, 1.93042105e+02, 1.93042105e+02]))
+        loss = loss_fct(logits.view(-1, self.model.config.num_labels), labels.view(-1))
+        return (loss, outputs) if return_outputs else loss
+
 
 def main():
     # See all possible arguments in src/transformers/training_args.py
@@ -514,7 +525,7 @@ def main():
         data_collator = None
 
     # Initialize our Trainer
-    trainer = Trainer(
+    trainer = CustomTrainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset if training_args.do_train else None,
