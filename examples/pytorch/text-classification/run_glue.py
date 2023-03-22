@@ -22,6 +22,7 @@ import random
 import sys
 from dataclasses import dataclass, field
 from typing import Optional
+from torch import nn
 
 import datasets
 import evaluate
